@@ -41,17 +41,112 @@ To submit your homework:
 
 """
 
+import traceback
+
+
+def index():
+    index_page = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <h1>My WSGI Calculator</h1><h4>by David Burnett</h4>
+        <!-- Codes by HTML.am -->
+        <p>Use this calculator to add, subtract, multiply, or divide two numbers.</p>
+        <br>
+        <p>http://localhost:8080</p>
+        <br>
+        <p>Add function and numbers to the URL as show below.  See table below 
+        for example of operations</p>
+        <!-- CSS Code -->
+        <style type="text/css" scoped>
+        table.GeneratedTable {
+        width:50%;
+        background-color:#FFFFFF;
+        border-collapse:collapse;border-width:1px;
+        border-color:#336600;
+        border-style:solid;
+        color:#009900;
+        }
+
+        table.GeneratedTable td, table.GeneratedTable th {
+        border-width:1px;
+        border-color:#336600;
+        border-style:solid;
+        padding:2px;
+        }
+
+        table.GeneratedTable thead {
+        background-color:#CCFF99;
+        }
+        </style>
+
+        <!-- HTML Code -->
+        <table class="GeneratedTable">
+        <thead>
+        <tr>
+        <th>Function</th>
+        <th>Address</th>
+        <th>Operation</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <td>Add</td>
+        <td>http://localhost:8080/add/num1/num2 </td>
+        <td>num1 + num2</td>
+        </tr>
+        <tr>
+        <td>Subtract</td>
+        <td>http://localhost:8080/subtract/num1/num2</td>
+        <td>num1 - num2</td>
+        </tr>
+        <tr>
+        <td>Multiply</td>
+        <td>http://localhost:8080/multiply/num1/num2</td>
+        <td>num1 * num2</td>
+        </tr>
+        <tr>
+        <td>Divide</td>
+        <td>http://localhost:8080/divide/num1/num2</td>
+        <td>num1 / num2</td>
+        </tr>
+        </tbody>
+        </table>
+    </head>
+    <body>
+
+    </body>
+    </html>
+    """
+    return index_page
+
 
 def add(*args):
     """ Returns a STRING with the sum of the arguments """
 
     # TODO: Fill sum with the correct value, based on the
     # args provided.
-    sum = "0"
-
-    return sum
+    # sum = "0"
+    return int(args[0]) + int(args[1])
 
 # TODO: Add functions for handling more arithmetic operations.
+
+
+def multiply(*args):
+    """ Returns a STRING with the product of the arguments """
+    return int(args[0]) * int(args[1])
+
+
+def subtract(*args):
+    """ Returns a STRING with the difference of the arguments """
+    return int(args[0]) - int(args[1])
+
+
+def divide(*args):
+    """ Returns a STRING with the quotient of the arguments """
+    return int(args[0]) / int(args[1])
+
 
 def resolve_path(path):
     """
@@ -63,12 +158,40 @@ def resolve_path(path):
     # examples provide the correct *syntax*, but you should
     # determine the actual values of func and args using the
     # path.
-    func = add
-    args = ['25', '32']
+    # func = add
+    # args = ['25', '32']
+    funcs = {
+        '': index,
+        'add': add,
+        'subtract': subtract,
+        'divide': divide,
+        'multiply': multiply,
+    }
 
+    path = path.strip('/').split('/')
+    func_name = path[0]
+    args = (path[1:])
+
+    try:
+        func = funcs[func_name]
+    except KeyError:
+        raise NameError
     return func, args
 
+
 def application(environ, start_response):
+    """
+    application function to take environ and start_response variables
+
+    environ points to a dictionary containing CGI like environment variables
+    which is populated by the server for each received request from the client
+
+    start_response is a callback function supplied by the server which takes
+    the HTTP status and headers as arguments
+
+    Returns the response body, wrapped in a list although it could be any
+    iterable.
+    """
     # TODO: Your application code from the book database
     # work here as well! Remember that your application must
     # invoke start_response(status, headers) and also return
@@ -76,9 +199,34 @@ def application(environ, start_response):
     #
     # TODO (bonus): Add error handling for a user attempting
     # to divide by zero.
-    pass
+    headers = [('Content-type', 'text/html')]
+    try:
+        path = environ.get('PATH_INFO', None)
+        if path is None:
+            raise NameError
+        func, args = resolve_path(path)
+        body = str(func(*args))
+        status = "200 OK"
+    except NameError:
+        status = "404 Not Found"
+        body = "<h1>Not Found</h1>"
+    except ZeroDivisionError:
+        status = "400 Bad Request"
+        body = "<h1>Dividing by zero</h1>"
+    except Exception:
+        status = "500 Internal Server Error"
+        body = "<h1> Internal Server Error</h1>"
+        print(traceback.format_exc())
+    finally:
+        headers.append(('Content-length', str(len(body))))
+        start_response(status, headers)
+        return [body.encode('utf8')]
+
 
 if __name__ == '__main__':
     # TODO: Insert the same boilerplate wsgiref simple
     # server creation that you used in the book database.
-    pass
+    from wsgiref.simple_server import make_server
+
+    srv = make_server('localhost', 8080, application)
+    srv.serve_forever()
