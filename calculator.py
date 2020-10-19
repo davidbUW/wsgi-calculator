@@ -228,5 +228,5 @@ if __name__ == '__main__':
     # server creation that you used in the book database.
     from wsgiref.simple_server import make_server
 
-    srv = make_server('localhost', 8000, application)
+    srv = make_server('localhost', 8080, application)
     srv.serve_forever()
