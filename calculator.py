@@ -128,24 +128,24 @@ def add(*args):
     # TODO: Fill sum with the correct value, based on the
     # args provided.
     # sum = "0"
-    return int(args[0]) + int(args[1])
+    return str(int(args[0]) + int(args[1]))
 
 # TODO: Add functions for handling more arithmetic operations.
 
 
 def multiply(*args):
     """ Returns a STRING with the product of the arguments """
-    return int(args[0]) * int(args[1])
+    return str(int(args[0]) * int(args[1]))
 
 
 def subtract(*args):
     """ Returns a STRING with the difference of the arguments """
-    return int(args[0]) - int(args[1])
+    return str(int(args[0]) - int(args[1]))
 
 
 def divide(*args):
     """ Returns a STRING with the quotient of the arguments """
-    return int(args[0]) / int(args[1])
+    return str(int(args[0]) / int(args[1]))
 
 
 def resolve_path(path):
@@ -205,7 +205,7 @@ def application(environ, start_response):
         if path is None:
             raise NameError
         func, args = resolve_path(path)
-        body = str(func(*args))
+        body = func(*args)
         status = "200 OK"
     except NameError:
         status = "404 Not Found"
@@ -228,5 +228,5 @@ if __name__ == '__main__':
     # server creation that you used in the book database.
     from wsgiref.simple_server import make_server
 
-    srv = make_server('localhost', 8080, application)
+    srv = make_server('localhost', 8000, application)
     srv.serve_forever()
